@@ -102,6 +102,44 @@ class NormalDistributionGenerator(RandomDistributionGenerator):
         return 1 / np.sqrt(2 * np.pi * self.sigma ** 2) * np.exp(-(x - self.mu) ** 2 / (2 * self.sigma ** 2))
 
 
+class EmpiricalDistributionGenerator(RandomDistributionGenerator):
+
+    def __init__(self, distribution, seed=None):
+        super().__init__(seed=seed)
+        self.distribution = distribution
+        cumulative = self.distribution.cumulative_distribution()
+        # agrego frecuencia ficticia (siempre menor que r)
+        # para facilitar la generación cuando cae en la
+        # primera clase/valor
+        self.cumulative = np.insert(cumulative, 0, -1.)
+
+    def _distribution_values(self):
+        r = self.state.random_sample()
+        for i in range(len(self.cumulative) - 1):
+            if self.cumulative[i] < r <= self.cumulative[i + 1]:  # encontrada la clase/valor
+                v = self.distribution[i].val
+                if self.distribution.is_continuous():
+                    r = self.state.random_sample()  # a ver donde cae dentro del rango
+                    return [v[0] + (v[1] - v[0]) * r]
+                else:
+                    return [v]
+
+    def _value_range(self):
+        first = self.distribution[0]
+        last = self.distribution[-1]
+        if self.distribution.is_continuous():
+            return first.val[0], last.val[1]
+        return first.val, last.val
+
+    def _theoretical_distribution(self, x):
+        arr = np.zeros(len(x))
+        if not self.distribution.is_continuous():
+            return arr  # TODO implementar caso discreto
+        for i in range(len(x)):
+            arr[i] = self.distribution.get_freq(x[i])
+        return arr
+
+
 class RandomDistributionPopulation(RandomPopulation):
 
     def __init__(self, generator=None, n=1000, seed=None):
@@ -136,4 +174,11 @@ class NormalRandomPopulation(RandomDistributionPopulation):
 
     def __init__(self, mu, sigma, n=1000, seed=None):
         super().__init__(NormalDistributionGenerator(mu, sigma, seed=seed),
+                         n=n)
+
+
+class EmpiricalRandomPopulation(RandomDistributionPopulation):
+
+    def __init__(self, distribution, n=1000, seed=None):
+        super().__init__(EmpiricalDistributionGenerator(distribution, seed=seed),
                          n=n)
