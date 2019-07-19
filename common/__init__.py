@@ -12,7 +12,7 @@ class RandomPopulation:
         self._population = np.array(population)
 
     @property
-    def population(self):
+    def values(self):
         return self._population.copy()
 
     @property
@@ -21,12 +21,24 @@ class RandomPopulation:
         sq = np.sqrt(n)
         return int(np.ceil(sq))
 
+    def is_continuous(self):
+        return not self.is_discrete()
+
+    def is_discrete(self):
+        return self._population.dtype.kind == 'i'
+
     def plot_histogram(self):
-        plt.hist(self._population, bins=self.classes, density=True)
+        if self.is_continuous():
+            plt.hist(self._population, bins=self.classes, density=True)
+        else:
+            dist = self.frequency_distribution()
+            # tomar y avanzar el color
+            ax, = plt.plot(dist.values, dist.frequencies, ',')
+            plt.vlines(dist.values, 0, dist.frequencies, lw=10, colors=ax.get_color())
         plt.grid()
 
     def frequency_distribution(self):
-        return FrequencyDistribution(values=self._population, classes=self.classes)
+        return FrequencyDistribution(population=self)
 
 
 @functools.total_ordering
@@ -35,6 +47,8 @@ class FrequencyDistributionEntry:
     def __init__(self, val, freq):
         if isinstance(val, collections.Iterable):
             val = tuple(val)
+        else:
+            val = int(val)
         self.val = val
         self.freq = freq
 
@@ -62,10 +76,10 @@ class FrequencyDistributionEntry:
 
 class FrequencyDistribution(collections.Sequence):
 
-    def __init__(self, values=None, classes=None, distr=None):
+    def __init__(self, population=None, classes=None, distr=None):
         self._distribution = None
-        if values is not None:
-            self._init_from_values(values, classes)
+        if population is not None:
+            self._init_from_population(population, classes)
         elif distr is not None:
             self._distribution = copy.deepcopy(distr)
             self._distribution.sort()
@@ -75,26 +89,26 @@ class FrequencyDistribution(collections.Sequence):
                 for e in self._distribution:
                     e.val = int(e.val)
 
-    def _init_from_values(self, values, classes):
-        arr = np.array(values)
-        if arr.dtype.kind == 'i':  # distribución discreta
+    def _init_from_population(self, population, classes):
+        values = population.values
+        if population.is_discrete():
             self.discrete = True
             self._distribution = [
                 FrequencyDistributionEntry(v, f)
-                for v, f in zip(*np.unique(arr, return_counts=True))
+                for v, f in zip(*np.unique(values, return_counts=True))
             ]
         else:  # distribución continua
             self.discrete = False
             if classes is None:
-                classes = int(np.ceil(np.sqrt(len(arr))))
-            partition_values = np.linspace(arr.min(), arr.max(), classes + 1)
+                classes = population.classes
+            partition_values = np.linspace(values.min(), values.max(), classes + 1)
             self._distribution = []
             for i in range(classes):
-                bool_matches = np.logical_and(arr >= partition_values[i],
-                                              arr < partition_values[i + 1])
+                bool_matches = np.logical_and(values >= partition_values[i],
+                                              values < partition_values[i + 1])
                 count = len(np.where(bool_matches)[0])
                 if i == classes - 1:  # el último intervalo es cerrado
-                    extra_matches = (arr == partition_values[classes])
+                    extra_matches = (values == partition_values[classes])
                     count += len(np.where(extra_matches)[0])
                 entry = FrequencyDistributionEntry((partition_values[i], partition_values[i + 1]),
                                                    count)
