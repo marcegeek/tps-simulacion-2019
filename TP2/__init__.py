@@ -1,7 +1,6 @@
 import abc
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 from common import RandomPopulation
 
@@ -19,13 +18,13 @@ class ProbabilityDistribution(abc.ABC):
     def is_discrete(self):
         return self._discrete
 
-    def plot_theoretical(self):
+    def plot_theoretical(self, axes, label=None):
         if self.is_continuous():
             x = np.linspace(*self._value_range(), 1000)
-            plt.plot(x, self._theoretical_distribution(x))
+            axes.plot(x, self._theoretical_distribution(x), label=label)
         else:
             x = np.arange(self._value_range()[0], self._value_range()[1] + 1)
-            plt.plot(x, self._theoretical_distribution(x), 'o')
+            axes.plot(x, self._theoretical_distribution(x), 'o', label=label)
 
     def random_sample(self, size=None):
         if size is not None:
@@ -158,8 +157,8 @@ class RandomDistributionPopulation(RandomPopulation):
         self.distribution = distribution
         super().__init__(self.distribution.random_sample(n))
 
-    def plot_theoretical(self):
-        self.distribution.plot_theoretical()
+    def plot_theoretical(self, axes, label=None):
+        self.distribution.plot_theoretical(axes, label=label)
 
 
 # clases envoltorio de conveniencia

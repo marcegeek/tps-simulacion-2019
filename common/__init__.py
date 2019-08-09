@@ -3,7 +3,6 @@ import copy
 import functools
 
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 class RandomPopulation:
@@ -27,15 +26,14 @@ class RandomPopulation:
     def is_discrete(self):
         return self._population.dtype.kind == 'i'
 
-    def plot_histogram(self):
+    def plot_histogram(self, axes, label=None):
         if self.is_continuous():
-            plt.hist(self._population, bins=self.classes, density=True)
+            axes.hist(self._population, bins=self.classes, density=True, label=label)
         else:
             dist = self.frequency_distribution()
             # tomar y avanzar el color
-            ax, = plt.plot(dist.values, dist.frequencies, ',')
-            plt.vlines(dist.values, 0, dist.frequencies, lw=10, colors=ax.get_color())
-        plt.grid()
+            points, = axes.plot(dist.values, dist.frequencies, ',')
+            axes.vlines(dist.values, 0, dist.frequencies, lw=10, colors=points.get_color(), label=label)
 
     def frequency_distribution(self):
         return FrequencyDistribution(population=self)
