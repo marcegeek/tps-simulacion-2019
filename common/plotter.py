@@ -1,18 +1,39 @@
-import matplotlib.pyplot as _plt
-import tikzplotlib
+import matplotlib
+import matplotlib.figure as mplfig
+
+# mostrado/manejo de figuras y ventanas
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+# bindings de teclas por defecto de matplotlib
+from matplotlib.backend_bases import key_press_handler
+import tkinter as tk
+
+import tikzplotlib  # generación de código PGF/TikZ para LaTeX
+
+matplotlib.use('TkAgg')
 
 
 class Figure:
 
     def __init__(self):
-        self._fig = _plt.figure()
+        self._fig = mplfig.Figure()
 
     def render(self, latexfile=None, standalone_latex=False):
         for ax in self._fig.axes:
             self._axes_legend(ax)
         if latexfile is None:
-            # self._fig.show()  FIXME no funciona en modo script
-            _plt.show()  # FIXME esto intenta mostrar todas las figuras pendientes
+            win = tk.Tk()
+            win.title('Figure')
+
+            canvas = FigureCanvasTkAgg(self._fig, master=win)
+            canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+            toolbar = NavigationToolbar2Tk(canvas, win)
+            toolbar.update()
+            canvas.mpl_connect('key_press_event',
+                               lambda ev: key_press_handler(ev, canvas, toolbar))
+
+            canvas.draw()
+            tk.mainloop()
         else:
             tikzcode = tikzplotlib.get_tikz_code(figure=self._fig,
                                                  extra_axis_parameters=[
