@@ -248,6 +248,42 @@ class NormalDistribution(ProbabilityDistribution):
         return [x0, x1]
 
 
+class BinomialDistribution(ProbabilityDistribution):
+
+    def __init__(self, n, p, seed=None):
+        super().__init__(seed=seed)
+        self._discrete = True
+        self.n = n
+        self.p = p
+
+    def theoretical_distribution(self, x):
+        return scipy.special.binom(self.n, x) * self.p**x * (1 - self.p)**(self.n - x)
+
+    def mean(self):
+        return self.n * self.p
+
+    def variance(self):
+        return self.n * self.p * (1 - self.p)
+
+    def _value_range(self):
+        delta = self.standard_deviation() * 4
+        return max(np.round(self.mean() - delta), 0.), np.round(self.mean() + delta)
+
+    def _cdf(self, x):
+        return super()._cdf(x)
+
+    def _ppf(self, p):
+        return super()._ppf(p)
+
+    def _distribution_values(self):
+        u = 0
+        for i in range(self.n):
+            r = self.state.random_sample()
+            if r < self.p:
+                u += 1
+        return [u]
+
+
 class EmpiricalDistribution(ProbabilityDistribution):
 
     def __init__(self, distribution, seed=None):
@@ -299,9 +335,9 @@ class EmpiricalDistribution(ProbabilityDistribution):
 
 class RandomDistributionPopulation(RandomPopulation):
 
-    def __init__(self, distribution, n=1000):
+    def __init__(self, distribution, size=1000):
         self.distribution = distribution
-        super().__init__(self.distribution.random_sample(n))
+        super().__init__(self.distribution.random_sample(size))
 
     def plot_theoretical(self, axes, label=None):
         self.distribution.plot_theoretical(axes, label=label)
@@ -311,34 +347,41 @@ class RandomDistributionPopulation(RandomPopulation):
 
 class UniformRandomPopulation(RandomDistributionPopulation):
 
-    def __init__(self, a, b, n=1000, seed=None):
+    def __init__(self, a, b, size=1000, seed=None):
         super().__init__(UniformDistribution(a, b, seed=seed),
-                         n=n)
+                         size=size)
 
 
 class ExponentialRandomPopulation(RandomDistributionPopulation):
 
-    def __init__(self, alpha, n=1000, seed=None):
+    def __init__(self, alpha, size=1000, seed=None):
         super().__init__(ExponentialDistribution(alpha, seed=seed),
-                         n=n)
+                         size=size)
 
 
 class GammaRandomPopulation(RandomDistributionPopulation):
 
-    def __init__(self, k, alpha, n=1000, seed=None):
+    def __init__(self, k, alpha, size=1000, seed=None):
         super().__init__(GammaDistribution(k, alpha, seed=seed),
-                         n=n)
+                         size=size)
 
 
 class NormalRandomPopulation(RandomDistributionPopulation):
 
-    def __init__(self, mu, sigma, n=1000, seed=None):
+    def __init__(self, mu, sigma, size=1000, seed=None):
         super().__init__(NormalDistribution(mu, sigma, seed=seed),
-                         n=n)
+                         size=size)
+
+
+class BinomialRandomPopulation(RandomDistributionPopulation):
+
+    def __init__(self, n, p, size=1000, seed=None):
+        super().__init__(BinomialDistribution(n, p, seed=seed),
+                         size=size)
 
 
 class EmpiricalRandomPopulation(RandomDistributionPopulation):
 
-    def __init__(self, distribution, n=1000, seed=None):
+    def __init__(self, distribution, size=1000, seed=None):
         super().__init__(EmpiricalDistribution(distribution, seed=seed),
-                         n=n)
+                         size=size)

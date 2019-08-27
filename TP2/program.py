@@ -3,28 +3,30 @@ import common
 from common import plotter
 
 
+def makeplots(rnd_pop, **render_args):
+    fig = plotter.SimpleFigure(xlabel='Valores', ylabel='Probabilidades')
+    rnd_pop.plot_histogram(axes=fig.ax, label='Distribución generada')
+    rnd_pop.plot_theoretical(axes=fig.ax, label='Distribución teórica')
+    fig.render(**render_args)
+
+
 def main():
-    rnd = TP2.UniformRandomPopulation(10, 35, n=1000, seed=228547833)
-    fig = plotter.SimpleFigure(xlabel='Valores', ylabel='Probabilidades')
-    rnd.plot_histogram(axes=fig.ax, label='Distribución generada')
-    rnd.plot_theoretical(axes=fig.ax, label='Distribución teórica')
-    fig.render()
-    rnd = TP2.ExponentialRandomPopulation(3, n=1000, seed=1957336057)
-    fig = plotter.SimpleFigure(xlabel='Valores', ylabel='Probabilidades')
-    rnd.plot_histogram(axes=fig.ax, label='Distribución generada')
-    rnd.plot_theoretical(axes=fig.ax, label='Distribución teórica')
-    fig.render()
-    rnd = TP2.GammaRandomPopulation(4, 3, n=1000, seed=1047849975)
-    fig = plotter.SimpleFigure(xlabel='Valores', ylabel='Probabilidades')
-    rnd.plot_histogram(axes=fig.ax, label='Distribución generada')
-    rnd.plot_theoretical(axes=fig.ax, label='Distribución teórica')
-    fig.render()
-    rnd = TP2.NormalRandomPopulation(3, 2, n=1000, seed=1085907535)
-    fig = plotter.SimpleFigure(xlabel='Valores', ylabel='Probabilidades')
-    rnd.plot_histogram(axes=fig.ax, label='Distribución generada')
-    rnd.plot_theoretical(axes=fig.ax, label='Distribución teórica')
-    fig.render()
-    rnd = TP2.EmpiricalRandomPopulation(common.FrequencyDistribution(
+    pop = TP2.UniformRandomPopulation(10, 35, size=1000, seed=228547833)
+    makeplots(pop)
+
+    pop = TP2.ExponentialRandomPopulation(3, size=1000, seed=1957336057)
+    makeplots(pop)
+
+    pop = TP2.GammaRandomPopulation(4, 3, size=1000, seed=1047849975)
+    makeplots(pop)
+
+    pop = TP2.NormalRandomPopulation(3, 2, size=1000, seed=1085907535)
+    makeplots(pop)
+
+    pop = TP2.BinomialRandomPopulation(10, 0.7, size=1000, seed=2961379677)
+    makeplots(pop)
+
+    pop = TP2.EmpiricalRandomPopulation(common.FrequencyDistribution(
         distr=[
             common.FrequencyDistributionEntry((1, 2), 1),
             common.FrequencyDistributionEntry((2, 3), 2),
@@ -33,12 +35,10 @@ def main():
             common.FrequencyDistributionEntry((5, 6), 2),
             common.FrequencyDistributionEntry((6, 7), 1)
         ]),
-        n=1000, seed=3131638626)
-    fig = plotter.SimpleFigure(xlabel='Valores', ylabel='Probabilidades')
-    rnd.plot_histogram(axes=fig.ax, label='Distribución generada')
-    rnd.plot_theoretical(axes=fig.ax, label='Distribución teórica')
-    fig.render()
-    rnd = TP2.EmpiricalRandomPopulation(common.FrequencyDistribution(
+        size=1000, seed=3131638626)
+    makeplots(pop)
+
+    pop = TP2.EmpiricalRandomPopulation(common.FrequencyDistribution(
         distr=[
             common.FrequencyDistributionEntry(2, 3),
             common.FrequencyDistributionEntry(3, 2),
@@ -47,11 +47,8 @@ def main():
             common.FrequencyDistributionEntry(6, 4),
             common.FrequencyDistributionEntry(7, 1)
         ]),
-        n=1000, seed=2662949332)
-    fig = plotter.SimpleFigure(xlabel='Valores', ylabel='Probabilidades')
-    rnd.plot_histogram(axes=fig.ax, label='Distribución generada')
-    rnd.plot_theoretical(axes=fig.ax, label='Distribución teórica')
-    fig.render()
+        size=1000, seed=2662949332)
+    makeplots(pop)
 
 
 if __name__ == '__main__':
