@@ -77,7 +77,7 @@ class ProbabilityDistribution(abc.ABC):
         if self.is_continuous():
             axes.plot(x, self.theoretical_distribution(x), label=label)
         else:
-            axes.plot(x, self.theoretical_distribution(x), 'o', label=label)
+            axes.plot(x, self.theoretical_distribution(x), 'o-', label=label)
 
     @abc.abstractmethod
     def _cdf(self, x):
