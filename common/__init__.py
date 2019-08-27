@@ -22,6 +22,18 @@ class RandomPopulation:
     def is_discrete(self):
         return self._population.dtype.kind == 'i'
 
+    def frequency_distribution(self):
+        return FrequencyDistribution(population=self)
+
+    def mean(self):
+        return self._population.mean()
+
+    def variance(self):
+        return self._population.var()
+
+    def standard_deviation(self):
+        return self._population.std()
+
     def plot_histogram(self, axes, label=None):
         if self.is_continuous():
             axes.hist(self._population, bins=self.classes, density=True, label=label)
