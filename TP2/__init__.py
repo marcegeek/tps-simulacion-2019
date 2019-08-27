@@ -19,19 +19,6 @@ class ProbabilityDistribution(abc.ABC):
     def is_discrete(self):
         return self._discrete
 
-    def plot_theoretical(self, axes, label=None):
-        if self.is_continuous():
-            x = np.linspace(*self._value_range(), num=1000)
-            axes.plot(x, self.theoretical_distribution(x), label=label)
-        else:
-            x = np.arange(self._value_range()[0], self._value_range()[1] + 1)
-            axes.plot(x, self.theoretical_distribution(x), 'o', label=label)
-
-    def random_sample(self, size=None):
-        if size is not None:
-            return np.array([next(self.generator) for _ in range(size)])
-        return next(self.generator)
-
     @abc.abstractmethod
     def theoretical_distribution(self, x):
         return np.array([1.] * len(x))
@@ -66,29 +53,46 @@ class ProbabilityDistribution(abc.ABC):
         return np.sqrt(self.variance())
 
     @abc.abstractmethod
-    def _value_range(self):
+    def value_range(self):
         return 0., 1.
+
+    def x_array(self, lower_limit=None, upper_limit=None):
+        first, last = self.value_range()
+        if lower_limit is not None:
+            first = lower_limit
+        if upper_limit is not None:
+            last = upper_limit
+        if self.is_continuous():
+            return np.linspace(first, last, num=1000)
+        else:
+            return np.arange(first, last + 1)
+
+    def random_sample(self, size=None):
+        if size is not None:
+            return np.array([next(self.generator) for _ in range(size)])
+        return next(self.generator)
+
+    def plot_theoretical(self, axes, label=None):
+        x = self.x_array()
+        if self.is_continuous():
+            axes.plot(x, self.theoretical_distribution(x), label=label)
+        else:
+            axes.plot(x, self.theoretical_distribution(x), 'o', label=label)
 
     @abc.abstractmethod
     def _cdf(self, x):
         # implementación básica por defecto
-        x0, _ = self._value_range()
+        v = self.x_array(upper_limit=x)
+        y = self.theoretical_distribution(v)
         if self.is_continuous():
-            v = np.linspace(x0, x, num=1000)
-            y = self.theoretical_distribution(v)
             return np.trapz(y, v)
         else:
-            v = np.arange(x0, x + 1)
-            return self.theoretical_distribution(v).sum()
+            return y.sum()
 
     @abc.abstractmethod
     def _ppf(self, p):
         # implementación básica por defecto
-        first, last = self._value_range()
-        if self.is_continuous():
-            x = np.linspace(first, last, num=1000)
-        else:
-            x = np.arange(first, last + 1)
+        x = self.x_array()
         for i in range(len(x)):
             if self._cdf(x[i]) >= p:
                 return x[i]
@@ -121,7 +125,7 @@ class UniformDistribution(ProbabilityDistribution):
     def variance(self):
         return (self.b - self.a)**2/12.
 
-    def _value_range(self):
+    def value_range(self):
         return self.a, self.b
 
     def _cdf(self, x):
@@ -157,7 +161,7 @@ class ExponentialDistribution(ProbabilityDistribution):
     def variance(self):
         return self.mean()**2
 
-    def _value_range(self):
+    def value_range(self):
         # cubrir el 99.9% de los valores
         return 0, 7. / self.alpha
 
@@ -189,7 +193,7 @@ class GammaDistribution(ProbabilityDistribution):
     def variance(self):
         return self.k/self.alpha**2
 
-    def _value_range(self):
+    def value_range(self):
         first = self.percent_point(0.0001)
         last = self.percent_point(0.9999)
         return first, last
@@ -227,7 +231,7 @@ class NormalDistribution(ProbabilityDistribution):
     def variance(self):
         return self.sigma**2
 
-    def _value_range(self):
+    def value_range(self):
         # cubrir el 99.99% de los valores
         delta = 4 * self.sigma
         return self.mu - delta, self.mu + delta
@@ -265,7 +269,7 @@ class BinomialDistribution(ProbabilityDistribution):
     def variance(self):
         return self.n * self.p * (1 - self.p)
 
-    def _value_range(self):
+    def value_range(self):
         delta = self.standard_deviation() * 4
         return max(np.round(self.mean() - delta), 0.), np.round(self.mean() + delta)
 
@@ -308,7 +312,7 @@ class EmpiricalDistribution(ProbabilityDistribution):
     def variance(self):
         return self.freq_distribution.variance()
 
-    def _value_range(self):
+    def value_range(self):
         first = self.freq_distribution[0]
         last = self.freq_distribution[-1]
         if self.is_continuous():
