@@ -44,8 +44,8 @@ class RandomPopulation:
         else:
             dist = self.frequency_distribution()
             # tomar y avanzar el color
-            points, = axes.plot(dist.values, dist.frequencies, ',')
-            axes.vlines(dist.values, 0, dist.frequencies, lw=10, colors=points.get_color(), label=label)
+            color = axes._get_lines.get_next_color()
+            axes.bar(dist.values, dist.frequencies, width=0.4, color=color, label=label)
 
 
 @functools.total_ordering
