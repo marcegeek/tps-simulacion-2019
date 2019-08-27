@@ -10,7 +10,7 @@ class ProbabilityDistribution(abc.ABC):
 
     def __init__(self, seed=None):
         self._discrete = False
-        self.state = np.random.RandomState(seed)
+        self.random_state = np.random.RandomState(seed)
         self.generator = self._generator()
 
     def is_continuous(self):
@@ -105,7 +105,7 @@ class ProbabilityDistribution(abc.ABC):
 
     @abc.abstractmethod
     def _distribution_values(self):
-        return [self.state.random_sample()]
+        return [self.random_state.random_sample()]
 
 
 class UniformDistribution(ProbabilityDistribution):
@@ -144,7 +144,7 @@ class UniformDistribution(ProbabilityDistribution):
         return self.a + (self.b - self.a) * p
 
     def _distribution_values(self):
-        u = self.state.random_sample()
+        u = self.random_state.random_sample()
         r = self.a + (self.b - self.a) * u
         return [r]
 
@@ -179,7 +179,7 @@ class ExponentialDistribution(ProbabilityDistribution):
         return super()._ppf(p)
 
     def _distribution_values(self):
-        u = self.state.random_sample()
+        u = self.random_state.random_sample()
         r = -1. / self.alpha * np.log(u)
         return [r]
 
@@ -215,9 +215,9 @@ class GammaDistribution(ProbabilityDistribution):
         k = int(np.floor(self.k))
         if k != self.k:
             q = self.k - k
-            if self.state.random_sample() < q:
+            if self.random_state.random_sample() < q:
                 k += 1
-        u = self.state.random_sample(k)
+        u = self.random_state.random_sample(k)
         r = -1. / self.alpha * np.log(u.prod())
         return [r]
 
@@ -250,8 +250,8 @@ class NormalDistribution(ProbabilityDistribution):
         return super()._ppf(p)
 
     def _distribution_values(self):
-        u1 = self.state.random_sample()
-        u2 = self.state.random_sample()
+        u1 = self.random_state.random_sample()
+        u2 = self.random_state.random_sample()
         r = np.sqrt(-2 * np.log(u1))
         z0, z1 = r * np.cos(2 * np.pi * u2), r * np.sin(2 * np.pi * u2)
         x0 = z0 * self.sigma + self.mu
@@ -289,7 +289,7 @@ class BinomialDistribution(ProbabilityDistribution):
     def _distribution_values(self):
         r = 0
         for i in range(self.n):
-            u = self.state.random_sample()
+            u = self.random_state.random_sample()
             if u < self.p:
                 r += 1
         return [r]
@@ -326,7 +326,7 @@ class PoissonDistribution(ProbabilityDistribution):
         b = np.exp(-self.lmbd)
         tr = 1.
         while tr >= b:
-            u = self.state.random_sample()
+            u = self.random_state.random_sample()
             tr *= u
             if tr >= b:
                 r += 1
@@ -371,12 +371,12 @@ class EmpiricalDistribution(ProbabilityDistribution):
         return super()._ppf(p)
 
     def _distribution_values(self):
-        r = self.state.random_sample()
+        r = self.random_state.random_sample()
         for i in range(len(self.cumulative) - 1):
             if self.cumulative[i] < r <= self.cumulative[i + 1]:  # encontrada la clase/valor
                 v = self.freq_distribution[i].val
                 if self.is_continuous():
-                    r = self.state.random_sample()  # a ver donde cae dentro del rango
+                    r = self.random_state.random_sample()  # a ver donde cae dentro del rango
                     return [v[0] + (v[1] - v[0]) * r]
                 else:
                     return [v]
