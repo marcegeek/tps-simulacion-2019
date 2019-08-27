@@ -12,22 +12,22 @@ def makeplots(rnd_pop, **render_args):
 
 def main():
     pop = TP2.UniformRandomPopulation(10, 35, size=1000, seed=228547833)
-    makeplots(pop)
+    makeplots(pop, latexfile='latex/uniform.tex')
 
     pop = TP2.ExponentialRandomPopulation(3, size=1000, seed=1957336057)
-    makeplots(pop)
+    makeplots(pop, latexfile='latex/exponential.tex')
 
     pop = TP2.GammaRandomPopulation(4, 3, size=1000, seed=1047849975)
-    makeplots(pop)
+    makeplots(pop, latexfile='latex/gamma.tex')
 
     pop = TP2.NormalRandomPopulation(3, 2, size=1000, seed=1085907535)
-    makeplots(pop)
+    makeplots(pop, latexfile='latex/normal.tex')
 
     pop = TP2.BinomialRandomPopulation(10, 0.7, size=1000, seed=2961379677)
-    makeplots(pop)
+    makeplots(pop, latexfile='latex/binomial.tex')
 
     pop = TP2.PoissonRandomPopulation(4, size=1000, seed=2061262339)
-    makeplots(pop)
+    makeplots(pop, latexfile='latex/poisson.tex')
 
     pop = TP2.EmpiricalRandomPopulation(common.FrequencyDistribution(
         distr=[
@@ -39,7 +39,7 @@ def main():
             common.FrequencyDistributionEntry((6, 7), 1)
         ]),
         size=1000, seed=3131638626)
-    makeplots(pop)
+    makeplots(pop, latexfile='latex/empirical-cont.tex')
 
     pop = TP2.EmpiricalRandomPopulation(common.FrequencyDistribution(
         distr=[
@@ -51,7 +51,7 @@ def main():
             common.FrequencyDistributionEntry(7, 1)
         ]),
         size=1000, seed=2662949332)
-    makeplots(pop)
+    makeplots(pop, latexfile='latex/empirical-disc.tex')
 
 
 if __name__ == '__main__':
