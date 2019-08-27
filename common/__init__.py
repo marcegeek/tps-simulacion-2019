@@ -26,6 +26,18 @@ class RandomPopulation:
     def is_discrete(self):
         return self._population.dtype.kind == 'i'
 
+    def frequency_distribution(self):
+        return FrequencyDistribution(population=self)
+
+    def mean(self):
+        return self._population.mean()
+
+    def variance(self):
+        return self._population.var()
+
+    def standard_deviation(self):
+        return self._population.std()
+
     def plot_histogram(self, axes, label=None):
         if self.is_continuous():
             axes.hist(self._population, bins=self.classes, density=True, label=label)
@@ -34,9 +46,6 @@ class RandomPopulation:
             # tomar y avanzar el color
             points, = axes.plot(dist.values, dist.frequencies, ',')
             axes.vlines(dist.values, 0, dist.frequencies, lw=10, colors=points.get_color(), label=label)
-
-    def frequency_distribution(self):
-        return FrequencyDistribution(population=self)
 
 
 @functools.total_ordering
