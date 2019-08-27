@@ -42,7 +42,7 @@ class ProbabilityDistribution(abc.ABC):
         else:
             r = np.zeros(len(x))
             for i in range(len(x)):
-                r[i] = self.cumulative_distribution(x[i])
+                r[i] = self._cdf(x[i])
             return r
 
     def percent_point(self, p):
@@ -51,7 +51,7 @@ class ProbabilityDistribution(abc.ABC):
         else:
             r = np.zeros(len(p))
             for i in range(len(p)):
-                r[i] = self.percent_point(p[i])
+                r[i] = self._ppf(p[i])
             return r
 
     @abc.abstractmethod
@@ -73,17 +73,24 @@ class ProbabilityDistribution(abc.ABC):
     def _cdf(self, x):
         # implementación básica por defecto
         x0, _ = self._value_range()
-        v = np.linspace(x0, x, num=1000)
-        y = self.theoretical_distribution(v)
-        return np.trapz(y, v)
+        if self.is_continuous():
+            v = np.linspace(x0, x, num=1000)
+            y = self.theoretical_distribution(v)
+            return np.trapz(y, v)
+        else:
+            v = np.arange(x0, x + 1)
+            return self.theoretical_distribution(v).sum()
 
     @abc.abstractmethod
     def _ppf(self, p):
         # implementación básica por defecto
         first, last = self._value_range()
-        x = np.linspace(first, last, num=1000)
+        if self.is_continuous():
+            x = np.linspace(first, last, num=1000)
+        else:
+            x = np.arange(first, last + 1)
         for i in range(len(x)):
-            if self._cdf(x) >= p:
+            if self._cdf(x[i]) >= p:
                 return x[i]
         return np.nan
 
@@ -245,9 +252,9 @@ class EmpiricalDistribution(ProbabilityDistribution):
 
     def __init__(self, distribution, seed=None):
         super().__init__(seed=seed)
-        self.distribution = distribution
-        self._discrete = self.distribution.is_discrete()
-        cumulative = self.distribution.cumulative_distribution()
+        self.freq_distribution = distribution
+        self._discrete = self.freq_distribution.is_discrete()
+        cumulative = self.freq_distribution.cumulative_distribution()
         # agrego frecuencia ficticia (siempre menor que r)
         # para facilitar la generación cuando cae en la
         # primera clase/valor
@@ -255,21 +262,19 @@ class EmpiricalDistribution(ProbabilityDistribution):
 
     def theoretical_distribution(self, x):
         arr = np.zeros(len(x))
-        if not self.is_continuous():
-            freqs = self.distribution.frequencies
         for i in range(len(x)):
-            arr[i] = self.distribution.get_freq(x[i])
+            arr[i] = self.freq_distribution.get_freq(x[i])
         return arr
 
     def mean(self):
-        pass  # TODO implementar
+        return self.freq_distribution.mean()
 
     def variance(self):
-        pass  # TODO implementar
+        return self.freq_distribution.variance()
 
     def _value_range(self):
-        first = self.distribution[0]
-        last = self.distribution[-1]
+        first = self.freq_distribution[0]
+        last = self.freq_distribution[-1]
         if self.is_continuous():
             return first.val[0], last.val[1]
         return first.val, last.val
@@ -284,7 +289,7 @@ class EmpiricalDistribution(ProbabilityDistribution):
         r = self.state.random_sample()
         for i in range(len(self.cumulative) - 1):
             if self.cumulative[i] < r <= self.cumulative[i + 1]:  # encontrada la clase/valor
-                v = self.distribution[i].val
+                v = self.freq_distribution[i].val
                 if self.is_continuous():
                     r = self.state.random_sample()  # a ver donde cae dentro del rango
                     return [v[0] + (v[1] - v[0]) * r]

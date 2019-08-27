@@ -56,6 +56,12 @@ class FrequencyDistributionEntry:
     def is_discrete(self):
         return not self.is_continuous()
 
+    def average(self):
+        if self.is_continuous():
+            return (self.val[0] + self.val[1])/2.
+        else:
+            return self.val
+
     def __str__(self):
         return '{}: {}'.format(self.val, self.freq)
 
@@ -87,6 +93,49 @@ class FrequencyDistribution(collections.Sequence):
                 for e in self._distribution:
                     e.val = int(e.val)
 
+    def is_continuous(self):
+        return not self.is_discrete()
+
+    def is_discrete(self):
+        return self.discrete
+
+    @property
+    def distribution(self):
+        return copy.deepcopy(self._distribution)
+
+    @property
+    def values(self):
+        return np.array([e.val for e in self._distribution])
+
+    @property
+    def frequencies(self):
+        return np.array([e.freq for e in self._distribution])
+
+    def get_freq(self, x):
+        i = self._get_index(x)
+        if i is not None:
+            return self._distribution[i].freq
+        return 0.
+
+    def cumulative_distribution(self):
+        return self.frequencies.cumsum()
+
+    def mean(self):
+        mean = 0.
+        for e in self._distribution:
+            mean += e.average() * e.freq
+        return mean
+
+    def variance(self):
+        mean = self.mean()
+        var = 0.
+        for e in self._distribution:
+            var += (e.average() - mean)**2 * e.freq
+        return var
+
+    def standard_deviation(self):
+        return np.sqrt(self.variance())
+
     def _init_from_population(self, population, classes):
         values = population.values
         if population.is_discrete():
@@ -113,29 +162,6 @@ class FrequencyDistribution(collections.Sequence):
                 self._distribution.append(entry)
         self._normalize()
 
-    def is_continuous(self):
-        return not self.is_discrete()
-
-    def is_discrete(self):
-        return self.discrete
-
-    @property
-    def distribution(self):
-        return copy.deepcopy(self._distribution)
-
-    @property
-    def values(self):
-        return np.array([e.val for e in self._distribution])
-
-    @property
-    def frequencies(self):
-        return np.array([e.freq for e in self._distribution])
-
-    def get_freq(self, x):
-        i = self._get_index(x)
-        if i is not None:
-            return self._distribution[i].freq
-
     def _get_index(self, x):
         for i in range(len(self)):
             e = self._distribution[i]
@@ -146,9 +172,6 @@ class FrequencyDistribution(collections.Sequence):
             else:
                 if e.val == x:
                     return i
-
-    def cumulative_distribution(self):
-        return self.frequencies.cumsum()
 
     def _normalize(self):
         # normalizar frecuencias entre 0 y 1
