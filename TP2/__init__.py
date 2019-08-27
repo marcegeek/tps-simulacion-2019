@@ -116,8 +116,11 @@ class UniformDistribution(ProbabilityDistribution):
         self.b = b
 
     def theoretical_distribution(self, x):
-        # FIXME corregir probabilidad para valores fuera de rango
-        return np.array([1. / (self.b - self.a)] * len(x))
+        dist = np.zeros(len(x))
+        for i in range(len(x)):
+            if self.a <= x[i] <= self.b:
+                dist[i] = 1. / (self.b - self.a)
+        return dist
 
     def mean(self):
         return (self.a + self.b)/2.
@@ -153,7 +156,11 @@ class ExponentialDistribution(ProbabilityDistribution):
         self.alpha = alpha
 
     def theoretical_distribution(self, x):
-        return self.alpha * np.exp(-self.alpha * x)
+        dist = np.zeros(len(x))
+        for i in range(len(x)):
+            if x[i] >= 0:
+                dist[i] = self.alpha * np.exp(-self.alpha * x[i])
+        return dist
 
     def mean(self):
         return 1./self.alpha
