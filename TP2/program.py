@@ -26,6 +26,9 @@ def main():
     pop = TP2.BinomialRandomPopulation(10, 0.7, size=1000, seed=2961379677)
     makeplots(pop)
 
+    pop = TP2.PoissonRandomPopulation(4, size=1000, seed=2061262339)
+    makeplots(pop)
+
     pop = TP2.EmpiricalRandomPopulation(common.FrequencyDistribution(
         distr=[
             common.FrequencyDistributionEntry((1, 2), 1),

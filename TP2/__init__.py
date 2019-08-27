@@ -287,12 +287,50 @@ class BinomialDistribution(ProbabilityDistribution):
         return super()._ppf(p)
 
     def _distribution_values(self):
-        u = 0
+        r = 0
         for i in range(self.n):
-            r = self.state.random_sample()
-            if r < self.p:
-                u += 1
-        return [u]
+            u = self.state.random_sample()
+            if u < self.p:
+                r += 1
+        return [r]
+
+
+class PoissonDistribution(ProbabilityDistribution):
+
+    def __init__(self, lmbd, seed=None):
+        super().__init__(seed=seed)
+        self._discrete = True
+        self.lmbd = lmbd
+
+    def theoretical_distribution(self, x):
+        return np.exp(x * np.log(self.lmbd) - self.lmbd - scipy.special.loggamma(x + 1))
+
+    def mean(self):
+        return self.lmbd
+
+    def variance(self):
+        return self.lmbd
+
+    def value_range(self):
+        delta = self.standard_deviation() * 4
+        return max(np.round(self.mean() - delta), 0.), np.round(self.mean() + delta)
+
+    def _cdf(self, x):
+        return super()._cdf(x)
+
+    def _ppf(self, p):
+        return super()._ppf(p)
+
+    def _distribution_values(self):
+        r = 0
+        b = np.exp(-self.lmbd)
+        tr = 1.
+        while tr >= b:
+            u = self.state.random_sample()
+            tr *= u
+            if tr >= b:
+                r += 1
+        return [r]
 
 
 class EmpiricalDistribution(ProbabilityDistribution):
@@ -388,6 +426,13 @@ class BinomialRandomPopulation(RandomDistributionPopulation):
 
     def __init__(self, n, p, size=1000, seed=None):
         super().__init__(BinomialDistribution(n, p, seed=seed),
+                         size=size)
+
+
+class PoissonRandomPopulation(RandomDistributionPopulation):
+
+    def __init__(self, lmbd, size=1000, seed=None):
+        super().__init__(PoissonDistribution(lmbd, seed=seed),
                          size=size)
 
 
