@@ -48,28 +48,28 @@ class Figure(mplfig.Figure):
     def show(self, warn=True):
         self.render()
 
-    @staticmethod
-    def _axes_legend(ax):
-        haslabels = False
+    def _axes_legend(self, ax):
+        has_labels = False
         for line in ax.lines:
             label = line.get_label()
             if label and not label.startswith('_'):
-                haslabels = True
+                has_labels = True
                 break
-        if not haslabels:
+        if not has_labels:
             for patch in ax.patches:
                 label = patch.get_label()
                 if label and not label.startswith('_'):
-                    haslabels = True
+                    has_labels = True
                     break
-        if not haslabels:
+        if not has_labels:
             for coll in ax.collections:
                 label = coll.get_label()
                 if label and not label.startswith('_'):
-                    haslabels = True
+                    has_labels = True
                     break
-        if haslabels:
-            ax.legend(fancybox=True, framealpha=0.5)
+        if has_labels:
+            ax.legend(loc='upper left', bbox_to_anchor=(1.01, 0.99), fancybox=True)
+            self.set_tight_layout(True)
 
 
 class SimpleFigure(Figure):
