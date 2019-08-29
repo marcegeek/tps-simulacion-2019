@@ -3,7 +3,7 @@ import abc
 import numpy as np
 import scipy.special
 
-from common import RandomPopulation
+import stats
 
 
 class ProbabilityDistribution(abc.ABC):
@@ -382,7 +382,7 @@ class EmpiricalDistribution(ProbabilityDistribution):
                     return [v]
 
 
-class RandomDistributionPopulation(RandomPopulation):
+class RandomDistributionPopulation(stats.RandomPopulation):
 
     def __init__(self, distribution, size=1000):
         self.distribution = distribution
