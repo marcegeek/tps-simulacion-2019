@@ -1,6 +1,5 @@
-import plotter
-import stats
-import stats.distributions as dist
+from code import stats, plotter
+import code.stats.distributions as dist
 
 
 def make_plots(rnd_pop, **render_args):

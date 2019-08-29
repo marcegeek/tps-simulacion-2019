@@ -3,7 +3,7 @@ import abc
 import numpy as np
 import scipy.special
 
-import stats
+from code import stats
 
 
 class ProbabilityDistribution(abc.ABC):

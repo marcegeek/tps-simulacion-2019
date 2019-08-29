@@ -31,7 +31,7 @@ p = (ex - vx) / ex
 ex = n * p
 vx = n * p * (1 - p)
 
--(ex-vx)/(ex-vx)**2/ex**2 = n
+# -(ex-vx)/(ex-vx)**2/ex**2 = n
 
 
 print('Binomial con n={}, p={}'.format(n, p))
