@@ -76,7 +76,7 @@ class RandomNumberGenerator(abc.ABC):
 class MiddleSquareGenerator(RandomNumberGenerator):
 
     def __init__(self, digits=4, seed=None):
-        if digits <= 0 or digits % 0 != 0:
+        if digits <= 0 or digits % 2 != 0:
             raise Exception('Invalid digits')
         self._digits = digits
         super().__init__(seed=seed)
