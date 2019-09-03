@@ -8,9 +8,11 @@ from code import stats
 
 class ProbabilityDistribution(abc.ABC):
 
-    def __init__(self, seed=None):
+    def __init__(self, rng_class=None, seed=None):
         self._discrete = False
-        self.random_state = np.random.RandomState(seed)
+        if rng_class is None:
+            rng_class = np.random.RandomState
+        self.random_state = rng_class(seed)
         self.generator = self._generator()
 
     def is_continuous(self):
@@ -110,8 +112,8 @@ class ProbabilityDistribution(abc.ABC):
 
 class UniformDistribution(ProbabilityDistribution):
 
-    def __init__(self, a, b, seed=None):
-        super().__init__(seed=seed)
+    def __init__(self, a, b, rng_class=None, seed=None):
+        super().__init__(rng_class=rng_class, seed=seed)
         self.a = a
         self.b = b
 
@@ -151,8 +153,8 @@ class UniformDistribution(ProbabilityDistribution):
 
 class ExponentialDistribution(ProbabilityDistribution):
 
-    def __init__(self, alpha, seed=None):
-        super().__init__(seed=seed)
+    def __init__(self, alpha, rng_class=None, seed=None):
+        super().__init__(rng_class=rng_class, seed=seed)
         self.alpha = alpha
 
     def theoretical_distribution(self, x):
@@ -186,8 +188,8 @@ class ExponentialDistribution(ProbabilityDistribution):
 
 class GammaDistribution(ProbabilityDistribution):
 
-    def __init__(self, k, alpha, seed=None):
-        super().__init__(seed=seed)
+    def __init__(self, k, alpha, rng_class=None, seed=None):
+        super().__init__(rng_class=rng_class, seed=seed)
         self.alpha = alpha
         self.k = k
 
@@ -224,8 +226,8 @@ class GammaDistribution(ProbabilityDistribution):
 
 class NormalDistribution(ProbabilityDistribution):
 
-    def __init__(self, mu, sigma, seed=None):
-        super().__init__(seed=seed)
+    def __init__(self, mu, sigma, rng_class=None, seed=None):
+        super().__init__(rng_class=rng_class, seed=seed)
         self.mu = mu
         self.sigma = sigma
 
@@ -261,8 +263,8 @@ class NormalDistribution(ProbabilityDistribution):
 
 class BinomialDistribution(ProbabilityDistribution):
 
-    def __init__(self, n, p, seed=None):
-        super().__init__(seed=seed)
+    def __init__(self, n, p, rng_class=None, seed=None):
+        super().__init__(rng_class=rng_class, seed=seed)
         self._discrete = True
         self.n = n
         self.p = p
@@ -297,8 +299,8 @@ class BinomialDistribution(ProbabilityDistribution):
 
 class PoissonDistribution(ProbabilityDistribution):
 
-    def __init__(self, lmbd, seed=None):
-        super().__init__(seed=seed)
+    def __init__(self, lmbd, rng_class=None, seed=None):
+        super().__init__(rng_class=rng_class, seed=seed)
         self._discrete = True
         self.lmbd = lmbd
 
@@ -335,8 +337,8 @@ class PoissonDistribution(ProbabilityDistribution):
 
 class EmpiricalDistribution(ProbabilityDistribution):
 
-    def __init__(self, distribution, seed=None):
-        super().__init__(seed=seed)
+    def __init__(self, distribution, rng_class=None, seed=None):
+        super().__init__(rng_class=rng_class, seed=seed)
         self.freq_distribution = distribution
         self._discrete = self.freq_distribution.is_discrete()
         cumulative = self.freq_distribution.cumulative_distribution()
@@ -396,48 +398,48 @@ class RandomDistributionPopulation(stats.RandomPopulation):
 
 class UniformRandomPopulation(RandomDistributionPopulation):
 
-    def __init__(self, a, b, size=1000, seed=None):
-        super().__init__(UniformDistribution(a, b, seed=seed),
+    def __init__(self, a, b, size=1000, rng_class=None, seed=None):
+        super().__init__(UniformDistribution(a, b, rng_class=rng_class, seed=seed),
                          size=size)
 
 
 class ExponentialRandomPopulation(RandomDistributionPopulation):
 
-    def __init__(self, alpha, size=1000, seed=None):
-        super().__init__(ExponentialDistribution(alpha, seed=seed),
+    def __init__(self, alpha, size=1000, rng_class=None, seed=None):
+        super().__init__(ExponentialDistribution(alpha, rng_class=rng_class, seed=seed),
                          size=size)
 
 
 class GammaRandomPopulation(RandomDistributionPopulation):
 
-    def __init__(self, k, alpha, size=1000, seed=None):
-        super().__init__(GammaDistribution(k, alpha, seed=seed),
+    def __init__(self, k, alpha, size=1000, rng_class=None, seed=None):
+        super().__init__(GammaDistribution(k, alpha, rng_class=rng_class, seed=seed),
                          size=size)
 
 
 class NormalRandomPopulation(RandomDistributionPopulation):
 
-    def __init__(self, mu, sigma, size=1000, seed=None):
-        super().__init__(NormalDistribution(mu, sigma, seed=seed),
+    def __init__(self, mu, sigma, size=1000, rng_class=None, seed=None):
+        super().__init__(NormalDistribution(mu, sigma, rng_class=rng_class, seed=seed),
                          size=size)
 
 
 class BinomialRandomPopulation(RandomDistributionPopulation):
 
-    def __init__(self, n, p, size=1000, seed=None):
-        super().__init__(BinomialDistribution(n, p, seed=seed),
+    def __init__(self, n, p, size=1000, rng_class=None, seed=None):
+        super().__init__(BinomialDistribution(n, p, rng_class=rng_class, seed=seed),
                          size=size)
 
 
 class PoissonRandomPopulation(RandomDistributionPopulation):
 
-    def __init__(self, lmbd, size=1000, seed=None):
-        super().__init__(PoissonDistribution(lmbd, seed=seed),
+    def __init__(self, lmbd, size=1000, rng_class=None, seed=None):
+        super().__init__(PoissonDistribution(lmbd, rng_class=rng_class, seed=seed),
                          size=size)
 
 
 class EmpiricalRandomPopulation(RandomDistributionPopulation):
 
-    def __init__(self, distribution, size=1000, seed=None):
-        super().__init__(EmpiricalDistribution(distribution, seed=seed),
+    def __init__(self, distribution, size=1000, rng_class=None, seed=None):
+        super().__init__(EmpiricalDistribution(distribution, rng_class=rng_class, seed=seed),
                          size=size)
