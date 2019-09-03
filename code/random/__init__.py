@@ -37,6 +37,14 @@ class RandomNumberGenerator(abc.ABC):
             arr.itemset(i, self._randint(low, high))
         return arr
 
+    def randint_raw(self, shape=None, dtype='l'):
+        if shape is None:
+            return self.next()
+        arr = np.zeros(shape, dtype=dtype)
+        for i in range(arr.size):  # recorrer linealmente
+            arr.itemset(i, self.next())
+        return arr
+
     @abc.abstractmethod
     def next(self):
         self._z = 0
@@ -75,7 +83,7 @@ class RandomNumberGenerator(abc.ABC):
 
 class MiddleSquareGenerator(RandomNumberGenerator):
 
-    def __init__(self, digits=4, seed=None):
+    def __init__(self, seed=None, digits=4):
         if digits <= 0 or digits % 2 != 0:
             raise Exception('Invalid digits')
         self._digits = digits
@@ -107,7 +115,31 @@ class LinearCongruentialGenerator(RandomNumberGenerator):
         return self.modulus - 1
 
 
-class RanduGenerator(LinearCongruentialGenerator):
+class NumericalRecipesLCG(LinearCongruentialGenerator):
+
+    def __init__(self, seed=None):
+        super().__init__(2 ** 32, 1664525, 1013904223, seed=seed)
+
+
+class AnsiCLCG(LinearCongruentialGenerator):
+
+    def __init__(self, seed=None):
+        super().__init__(2 ** 31, 1103515245, 12345, seed=seed)
+
+
+class MinStd88LCG(LinearCongruentialGenerator):
+
+    def __init__(self, seed=None):
+        super().__init__(2 ** 31 - 1, 16807, 0, seed=seed)
+
+
+class MinStd93LCG(LinearCongruentialGenerator):
+
+    def __init__(self, seed=None):
+        super().__init__(2 ** 31 - 1, 48271, 0, seed=seed)
+
+
+class RanduLCG(LinearCongruentialGenerator):
 
     def __init__(self, seed=None):
         super().__init__(2 ** 31, 65539, 0, seed=seed)
