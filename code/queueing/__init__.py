@@ -5,15 +5,18 @@ from code.stats.distributions import ExponentialDistribution
 
 class Event(abc.ABC):
 
-    def __init__(self, time, ev_type):
+    def __init__(self, time, method):
         self.time = time
-        self.type = ev_type
+        self.method = method
 
     def __lt__(self, other):
         return self.time < other.time
 
     def __gt__(self, other):
         return self.time > other.time
+
+    def handle(self):
+        self.method()
 
 
 class Simulation(abc.ABC):
@@ -39,11 +42,9 @@ class Simulation(abc.ABC):
     def run_once(self):
         self.timing()
         self.update_stats()
-        self.handle_event(self.next_event)
-
-    @abc.abstractmethod
-    def handle_event(self, event):
-        pass
+        self.next_event.handle()
+        self.events.remove(self.next_event)
+        self.next_event = None
 
 
 class MM1(Simulation):
@@ -69,12 +70,12 @@ class MM1(Simulation):
 
     def schedule_next_arrival(self):
         self.events.append(
-            Event(self.clock + self.arr_dist.random_sample(), self.ARRIVAL_EVENT)
+            Event(self.clock + self.arr_dist.random_sample(), self.arrival)
         )
 
     def schedule_next_departure(self):
         self.events.append(
-            Event(self.clock + self.svc_dist.random_sample(),  self.DEPARTURE_EVENT)
+            Event(self.clock + self.svc_dist.random_sample(), self.departure)
         )
 
     def arrival(self):
@@ -95,13 +96,6 @@ class MM1(Simulation):
             self.total_delay += self.clock - self.arrival_times.pop(0)
             self.customers_delayed += 1
             self.schedule_next_departure()
-
-    def handle_event(self, event):
-        if event.type == self.ARRIVAL_EVENT:
-            self.arrival()
-        elif event.type == self.DEPARTURE_EVENT:
-            self.departure()
-        self.events.remove(event)
 
     def update_stats(self):
         super().update_stats()
