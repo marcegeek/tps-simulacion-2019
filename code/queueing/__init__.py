@@ -1,4 +1,5 @@
 import abc
+import random
 
 from code.stats.distributions import ExponentialDistribution
 
@@ -16,7 +17,7 @@ class Event(abc.ABC):
         return self.time > other.time
 
     def handle(self):
-        self.method()
+        self.method(self)
 
 
 class Simulation(abc.ABC):
@@ -47,85 +48,102 @@ class Simulation(abc.ABC):
         self.next_event = None
 
 
-class MM1(Simulation):
+class MMc(Simulation):
     STATUS_IDLE, STATUS_BUSY = 0, 1
     ARRIVAL_EVENT, DEPARTURE_EVENT = 0, 1
 
-    def __init__(self, mean_interarrival, mean_service, seed=None):
+    def __init__(self, servers, arrival_rate, service_rate, seed=None):
         super().__init__()
-        self.mean_interarrival = mean_interarrival
-        self.mean_service = mean_service
-        self.arr_dist = ExponentialDistribution(1 / self.mean_interarrival, seed=seed)
-        self.svc_dist = ExponentialDistribution(1 / self.mean_service, seed=seed)
+        self.arrival_rate = arrival_rate
+        self.service_rate = service_rate
+        self.arr_dist = ExponentialDistribution(self.arrival_rate, seed=seed)
+        self.svc_dist = ExponentialDistribution(self.service_rate, seed=seed)
         self.schedule_next_arrival()
 
         self.arrival_times = []
-        self.status = self.STATUS_IDLE
+        self.statuses = [self.STATUS_IDLE] * servers
         self.queue_len = 0
 
         self.customers_delayed = 0
         self.total_delay = 0.
         self.num_in_queue_area = 0.
-        self.status_area = 0.
+        self.statuses_area = 0.
 
     def schedule_next_arrival(self):
         self.events.append(
             Event(self.clock + self.arr_dist.random_sample(), self.arrival)
         )
 
-    def schedule_next_departure(self):
-        self.events.append(
-            Event(self.clock + self.svc_dist.random_sample(), self.departure)
-        )
+    def schedule_next_departure(self, server):
+        ev = Event(self.clock + self.svc_dist.random_sample(), self.departure)
+        ev.server = server
+        self.events.append(ev)
 
-    def arrival(self):
+    def arrival(self, event=None):
         self.schedule_next_arrival()
-        if self.status == self.STATUS_BUSY:
+        if self.statuses.count(self.STATUS_BUSY) == len(self.statuses):
             self.queue_len += 1
             self.arrival_times.append(self.clock)
         else:
             self.customers_delayed += 1
-            self.status = self.STATUS_BUSY
-            self.schedule_next_departure()
+            idle_servers = [i for i in range(len(self.statuses)) if self.statuses[i] == self.STATUS_IDLE]
+            index = random.choice(idle_servers)
+            self.statuses[index] = self.STATUS_BUSY
+            self.schedule_next_departure(index)
 
-    def departure(self):
-        if self.queue_len == 0:
-            self.status = self.STATUS_IDLE
-        else:
+    def departure(self, ev):
+        self.statuses[ev.server] = self.STATUS_IDLE
+        if self.queue_len != 0:
             self.queue_len -= 1
             self.total_delay += self.clock - self.arrival_times.pop(0)
             self.customers_delayed += 1
-            self.schedule_next_departure()
+            idle_servers = [i for i in range(len(self.statuses)) if self.statuses[i] == self.STATUS_IDLE]
+            index = random.choice(idle_servers)
+            self.statuses[index] = self.STATUS_BUSY
+            self.schedule_next_departure(index)
 
     def update_stats(self):
         super().update_stats()
         self.num_in_queue_area += self.queue_len * self.time_since_last_event
-        self.status_area += self.status * self.time_since_last_event
+        self.statuses_area += sum(self.statuses)/len(self.statuses) * self.time_since_last_event
+
+    def average_delay(self):
+        return self.total_delay / self.customers_delayed
+
+    def average_number_in_queue(self):
+        return self.num_in_queue_area / self.clock
+
+    def server_utilization(self):
+        return self.statuses_area / self.clock
 
     def run(self, delays_required):
         while self.customers_delayed < delays_required:
             self.run_once()
 
     def report(self):
-        print('Average delay in queue{:11.3f} minutes'.format(self.total_delay / self.customers_delayed))
-        print('Average number in queue{:10.3f}'.format(self.num_in_queue_area / self.clock))
-        print('Server utilization{:15.3f}'.format(self.status_area / self.clock))
+        print('Average delay in queue{:11.3f} minutes'.format(self.average_delay()))
+        print('Average number in queue{:10.3f}'.format(self.average_number_in_queue()))
+        print('Server utilization{:15.3f}'.format(self.server_utilization()))
         print('Time simulation ended{:12.3f}'.format(self.clock))
 
-    def __eq__(self, other):
-        return (self.status == other.status and
-                self.queue_len == other.queue_len and
-                self.last_event_time == other.last_event_time and
-                self.customers_delayed == other.customers_delayed and
-                self.total_delay == other.total_delay and
-                self.num_in_queue_area == other.num_in_queue_area and
-                self.status_area == other.status_area)
+
+class MM1(MMc):
+
+    def __init__(self, arrival_rate, service_rate, seed=None):
+        super().__init__(1, arrival_rate, service_rate, seed=seed)
 
 
 def main():
-    mm1 = MM1(4, 3, seed=32145)
-    mm1.run(1000)
-    mm1.report()
+    sim = MM1(2, 4)
+    sim.run(1000)
+    print('M/M/1:')
+    sim.report()
+    print()
+
+    sim = MMc(2, 2, 4)
+    sim.run(1000)
+    print('M/M/2:')
+    sim.report()
 
 
 if __name__ == '__main__':
